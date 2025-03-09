@@ -57,11 +57,14 @@ class RandomBoardTicTacToe:
         pygame.display.set_caption("Tic Tac Toe Random Grid")
         self.screen.fill(self.BLACK)
         # Draw the grid
-        
-        """
-        YOUR CODE HERE TO DRAW THE GRID OTHER CONTROLS AS PART OF THE GUI
-        """
-        
+        for x in range(self.GRID_SIZE):
+            for y in range(self.GRID_SIZE):
+                rect = pygame.Rect(
+                    (self.MARGIN + self.WIDTH) * y + self.MARGIN,
+                    (self.MARGIN + self.HEIGHT) * x +self.MARGIN,
+                    self.WIDTH, self.HEIGHT
+                )
+                pygame.draw.rect(self.screen, self.WHITE, rect)
         pygame.display.update()
 
     def change_turn(self):
@@ -71,44 +74,70 @@ class RandomBoardTicTacToe:
         else:
             pygame.display.set_caption("Tic Tac Toe - X's turn")
 
-
     def draw_circle(self, x, y):
-        """
-        YOUR CODE HERE TO DRAW THE CIRCLE FOR THE NOUGHTS PLAYER
-        """
-        
+        center = ((self.MARGIN + self.WIDTH) * y + self.MARGIN + self.WIDTH /2, 
+                  (self.MARGIN + self.HEIGHT) * x + self.MARGIN + self.HEIGHT /2
+        )
+        radius = min(self.WIDTH, self.HEIGHT) / 2 - self.OFFSET
+        pygame.draw.circle(self.screen, self.CIRCLE_COLOR, center, radius, 5)
+        pygame.display.update()
 
     def draw_cross(self, x, y):
-        """
-        YOUR CODE HERE TO DRAW THE CROSS FOR THE CROSS PLAYER AT THE CELL THAT IS SELECTED VIA THE gui
-        """
-        
+        start_position1 = ((self.MARGIN + self.WIDTH) * y + self.MARGIN + self.OFFSET, 
+                           (self.MARGIN + self.HEIGHT) * x + self.MARGIN + self.OFFSET
+        )
+        end_position1 = ((self.MARGIN + self.WIDTH) * (y + 1) - self.MARGIN - self.OFFSET, 
+                         (self.MARGIN + self.HEIGHT) * (x + 1) - self.MARGIN - self.OFFSET
+        )
+        start_position2 = ((self.MARGIN + self.WIDTH) * (y + 1) - self.MARGIN - self.OFFSET, 
+                           (self.MARGIN + self.HEIGHT) * x + self.MARGIN + self.OFFSET
+        )
+        end_position2 = ((self.MARGIN + self.WIDTH) * y + self.MARGIN + self.OFFSET, 
+                         (self.MARGIN + self.HEIGHT) * (x + 1) - self.MARGIN - self.OFFSET
+        )
 
     def is_game_over(self):
-
-        """
-        YOUR CODE HERE TO SEE IF THE GAME HAS TERMINATED AFTER MAKING A MOVE. YOU SHOULD USE THE IS_TERMINAL()
-        FUNCTION FROM GAMESTATUS_5120.PY FILE (YOU WILL FIRST NEED TO COMPLETE IS_TERMINAL() FUNCTION)
-        
-        YOUR RETURN VALUE SHOULD BE TRUE OR FALSE TO BE USED IN OTHER PARTS OF THE GAME
-        """
-    
+        if self.game_state.is_terminal():
+            return True
 
     def move(self, move):
         self.game_state = self.game_state.get_new_state(move)
 
 
     def play_ai(self):
-        """
-        YOUR CODE HERE TO CALL MINIMAX OR NEGAMAX DEPENDEING ON WHICH ALGORITHM SELECTED FROM THE GUI
-        ONCE THE ALGORITHM RETURNS THE BEST MOVE TO BE SELECTED, YOU SHOULD DRAW THE NOUGHT (OR CIRCLE DEPENDING
-        ON WHICH SYMBOL YOU SELECTED FOR THE AI PLAYER)
+        # Adjust depth on the number of empty cells
+        if empty_cells = sum(x.count(0) for x in self.game_state.board_state)
+            depth = 6 # 3x3 board
+        elif empty_cells > 16:
+            depth = 4 # Large boards with lots of empty cells
+        else:
+            depth = 6 # Increase depth as the board gets filled
+
+        # Use selected AI Algorithm
+        if self.ai_choice == 'minimax':
+            eval_score, move = minimax(self.game_state, depth=depth, maximizingPlayer=(self.ai_symbol == 'O'))
+        elif self.ai_choice == 'negamax':
+            color = 1 if self.ai_symbol == 'O' else -1
+            eval_score, move = negamax(self.game_state, depth=depth, color=color)
+        else: 
+            raise ValueError("Invalid Choice.")
         
-        THE RETURN VALUES FROM YOUR MINIMAX/NEGAMAX ALGORITHM SHOULD BE THE SCORE, MOVE WHERE SCORE IS AN INTEGER
-        NUMBER AND MOVE IS AN X,Y LOCATION RETURNED BY THE AGENT
-        """
+        if move is not None:
+            x, y = move
+            self.game_state.board_state[x][y] = 1 if self.ai_symbol == 'O'else -1
+            if self.ai_symbol == 'O':
+                self.draw_circle(x, y)
+            else:
+                self.draw_cross(x, y)
+            if self.is_game_over():
+                self.display_winner()
+                pygame.time.wait(5000)
+                self.game_reset()
+            else:self.change_turn()
+
+        else:
+            print("No moves left!")
         
-        self.change_turn()
         pygame.display.update()
         terminal = self.game_state.is_terminal()
         """ USE self.game_state.get_scores(terminal) HERE TO COMPUTE AND DISPLAY THE FINAL SCORES """
@@ -126,9 +155,7 @@ class RandomBoardTicTacToe:
 
     def play_game(self, mode = "player_vs_ai"):
         done = False
-
         clock = pygame.time.Clock()
-
 
         while not done:
             for event in pygame.event.get():  # User did something
